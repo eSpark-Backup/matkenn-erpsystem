@@ -89,7 +89,7 @@ static void dump_data(const struct quirc_data *data)
 {
     ESP_LOGI("Payload: ", "%s", data->payload);
     qrPayload = (char *)data->payload;
-    qrDetect = 1;
+    qrDetect = true;
 }
 
 static void dump_info(struct quirc *q, uint8_t count)
