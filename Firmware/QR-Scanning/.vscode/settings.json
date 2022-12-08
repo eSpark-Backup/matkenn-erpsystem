@@ -76,7 +76,9 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "thread": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "time.h": "c",
+        "_locale.h": "c"
     },
     "idf.flashType": "UART"
 }
