@@ -8,6 +8,10 @@ TaskHandle_t gpioTaskHandle;
 
 extern "C" void app_main(void)
 {
+    WIFINETWORK wifi;
+    wifi.Connect();
+    FIREBASE fireBase(API_KEY, DATABASE_URL);
+
     camera = new Camera;
     camera->setup();
 
@@ -19,13 +23,19 @@ extern "C" void app_main(void)
     while(1)
     {
         if(QR->qrDetected())
-        {            
+        {
             char* payload = QR->getPayload();
             ESP_LOGE("PAYLOAD","%s",payload);
-            vTaskDelay(2000/portTICK_RATE_MS);
-            
+            fireBase.startClient();
+            fireBase.sendData(payload);
+        }
+        if(fireBase.getClientStatus())
+        {
+            fireBase.stopClient();
             QR->createTask(QR);
-        }        
+            ESP_LOGI("QR","TASK CREATED");
+        }
+ 
         vTaskDelay(10/portTICK_RATE_MS);
     }
 }

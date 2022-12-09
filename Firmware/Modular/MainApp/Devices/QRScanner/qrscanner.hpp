@@ -11,6 +11,7 @@
 #include "dl_lib_matrix3d.h"
 
 void QRtask(void* parameters);
+void QRJPEGtask(void* parameters);
 
 class QRScanner
 {

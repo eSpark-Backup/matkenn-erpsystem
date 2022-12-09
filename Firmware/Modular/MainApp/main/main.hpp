@@ -14,14 +14,15 @@
 #include "freertos/task.h"
 
 /*********************QR Scanner*******************/
-#include "esp_camera.h"
-#include "quirc.h"
+// #include "esp_camera.h"
+// #include "quirc.h"
 // #include "JPEGDEC.h"
 /*********************QR Scanner*******************/
 
 #include "../Devices/Camera/camera.hpp"
 #include "../Devices/QRScanner/qrscanner.hpp"
+#include "../Devices/GPIO/io.hpp"
+#include "../Devices/Wifi/wifinetwork.hpp"
+#include "../Devices/Cloud/cloud.hpp"
 
 #endif
-
-#include "../Devices/GPIO/io.hpp"
