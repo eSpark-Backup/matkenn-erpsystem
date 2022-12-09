@@ -6,6 +6,7 @@ extern "C" void app_main(void)
     wifi.Connect();
 
     FIREBASE fireBase(API_KEY, DATABASE_URL);
+    fireBase.startClient();
 
     while(1)
     {

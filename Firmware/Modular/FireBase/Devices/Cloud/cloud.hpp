@@ -28,9 +28,15 @@ class Cloud{
 
 class FIREBASE : public Cloud
 {
+    private:
+    bool clientStatus = false;
+
     public:
     FIREBASE(char* API, char* dbURL) : Cloud(API, dbURL) {};
     void sendData(char* data);
+    void startClient();
+    void stopClient();
+    bool getClientStatus();
 };
 
 #endif
