@@ -33,7 +33,7 @@ class FIREBASE : public Cloud
 
     public:
     FIREBASE(char* API, char* dbURL) : Cloud(API, dbURL) {};
-    void sendData(char* data);
+    void sendQRData(char* payload, char* timestamp = "xx:xx:xx");
     void startClient();
     void stopClient();
     bool getClientStatus();

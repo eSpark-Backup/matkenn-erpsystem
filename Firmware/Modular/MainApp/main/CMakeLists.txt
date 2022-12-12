@@ -1,4 +1,10 @@
-idf_component_register(SRCS "main.cpp" "../Devices/GPIO/io.cpp" "../Devices/GPIO/erpsystem.cpp" 
-                        "../Devices/Camera/camera.cpp" "../Devices/QRScanner/qrscanner.cpp"
-                        "../Devices/Wifi/wifinetwork.cpp" "../Devices/Cloud/cloud.cpp" "../Devices/Cloud/firebase.cpp"
+idf_component_register(SRCS "main.cpp" 
+                        "../Devices/GPIO/io.cpp" 
+                        "../Devices/GPIO/erpsystem.cpp" 
+                        "../Devices/Camera/camera.cpp" 
+                        "../Devices/QRScanner/qrscanner.cpp"
+                        "../Devices/Wifi/wifinetwork.cpp" 
+                        "../Devices/Cloud/cloud.cpp" 
+                        "../Devices/Cloud/firebase.cpp"
+                        "../Devices/SNTP/sntp.cpp"
                     INCLUDE_DIRS ".")

@@ -19,10 +19,12 @@
 // #include "JPEGDEC.h"
 /*********************QR Scanner*******************/
 
+#include "../Devices/SNTP/sntp.hpp"
 #include "../Devices/Camera/camera.hpp"
 #include "../Devices/QRScanner/qrscanner.hpp"
 #include "../Devices/GPIO/io.hpp"
 #include "../Devices/Wifi/wifinetwork.hpp"
 #include "../Devices/Cloud/cloud.hpp"
+
 
 #endif

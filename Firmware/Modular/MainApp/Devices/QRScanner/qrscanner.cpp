@@ -79,6 +79,7 @@ void QRtask(void* parameters)
     
     // Destroy QR-Code recognizer (quirc)
     quirc_destroy(qr_recognizer);
+    qr_recognizer = NULL;
     QR->deleteTask();
 }
 
