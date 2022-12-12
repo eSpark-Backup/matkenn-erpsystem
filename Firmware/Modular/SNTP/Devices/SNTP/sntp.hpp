@@ -8,17 +8,16 @@
 #include "nvs_flash.h"
 #include "esp_sntp.h"
 #include "esp_log.h"
+#include "string.h"
 
 class SNTP
 {
     private:
-    time_t now;
-    struct tm timeinfo;
-    char strftime_buf[64];
+    char buffer[64];
 
     public:
-    void setTimeStamp();
-    char* getTimeStamp();
+    char* getCurrentTime();
+    void setSystemTime();
 };
 
 

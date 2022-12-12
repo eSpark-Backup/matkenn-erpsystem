@@ -6,12 +6,11 @@ extern "C" void app_main(void)
     wifi.Connect();
 
     SNTP time;
-    
+    time.setSystemTime();
 
     while (1)
     {
-        time.setTimeStamp();
-        ESP_LOGI("SNTP","%s",time.getTimeStamp());
+        ESP_LOGI("SNTP","%s",time.getCurrentTime());
         vTaskDelay(1000/portTICK_RATE_MS);
     }
     
