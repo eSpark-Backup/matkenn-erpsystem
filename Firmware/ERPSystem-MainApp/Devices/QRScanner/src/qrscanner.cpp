@@ -29,6 +29,8 @@ void QRtask(void* parameters)
     qr_recognizer = quirc_new();
     if (!qr_recognizer) { ESP_LOGE(TAG, "Can't create quirc object");}
 
+    vTaskDelay(pdMS_TO_TICKS(5000));
+
     do
     {
         // Capture a frame
