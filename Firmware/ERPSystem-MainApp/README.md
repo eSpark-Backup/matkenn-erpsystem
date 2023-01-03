@@ -35,6 +35,7 @@ Below is short explanation of remaining files in the project folder.
 ```
 # FIRMWARE FLASHING
 Open ESP-IDF terminal, run the following commands:
+
     - Build :   idf.py build
     - Flash :   idf.py -p COMx flash [check your COM-PORT from the device-manager and replace it by x]
     - Monitor:  idf.py -p COMx monitor 
