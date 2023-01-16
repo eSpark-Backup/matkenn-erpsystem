@@ -12,8 +12,8 @@ bool IO::inputMode()
     this->config = {
         .pin_bit_mask = (1UL<<number),
         .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_ENABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
 
@@ -64,5 +64,17 @@ void IO::setLOW()
 int IO::getState()
 {
     return (gpio_get_level(number));
+}
+
+void IO::setState(int state)
+{
+    if(state)
+    {
+        this->setHIGH();
+    }
+    else
+    {
+        this->setLOW();
+    }
 }
 

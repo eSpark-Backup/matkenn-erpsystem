@@ -14,7 +14,7 @@ void WIFINETWORK::Connect()
     }
     ESP_ERROR_CHECK(ret);
     ESP_LOGI(WIFI_TAG, "ESP_WIFI_MODE_STA");
-    if(wifi_init_sta(this->ssid, this->password))
+    if(wifiInit(this->ssid, this->password))
         ESP_LOGI(TAG,"WIFI CONNECTED SUCCESSFULLY");
     else
         while(1)
@@ -52,7 +52,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-bool wifi_init_sta(const char* ssid, const char* password) {
+bool WIFINETWORK::wifiInit(const char* ssid, const char* password) {
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -77,7 +77,7 @@ bool wifi_init_sta(const char* ssid, const char* password) {
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(WIFI_TAG, "wifi_init_sta finished.");
+    ESP_LOGI(WIFI_TAG, "wifiInit finished.");
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or
     * connection failed for the maximum number of re-tries (WIFI_FAIL_BIT). The

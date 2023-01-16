@@ -3,7 +3,7 @@
 #define BTN1 GPIO_NUM_12
 #define BTN2 GPIO_NUM_13
 #define LED1 GPIO_NUM_14
-#define LED2 GPIO_NUM_15
+#define LED2 GPIO_NUM_4
 
 void ERPSystemIO::setup()
 {
@@ -21,23 +21,8 @@ void ERPSystemIO::setup()
 
 void ERPSystemIO::run()
 {
-    if(!btn1.getState())
-    {
-        led1.setHIGH();
-    }
-    else
-    {
-        led1.setLOW();
-    }
-
-    if(!btn2.getState())
-    {
-        led2.setHIGH();
-    }
-    else
-    {
-        led2.setLOW();
-    }
+    led1.setState(btn1.getState());
+    led2.setState(btn2.getState());
 }
 
 void ERPSystemIO::taskDelete(TaskHandle_t * GPIOtaskHandle)
@@ -56,6 +41,6 @@ void gpioActuation(void* parameters)
     while(1)
     {
         gpio->run();
-        vTaskDelay(10);
+        vTaskDelay(GPIO_TSK_DLY_MS);
     }
 }

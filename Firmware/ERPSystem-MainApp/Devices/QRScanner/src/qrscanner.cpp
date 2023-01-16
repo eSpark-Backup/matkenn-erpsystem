@@ -1,6 +1,10 @@
 #include "qrscanner.hpp"
 
 #define TAG "QRScanner"
+#define RGB_LVLS 3
+#define RED_LVL 0
+#define GREEN_LVL 1
+#define BLUE_LVL 2
 
 void QRScanner::createTask(QRScanner* QR)
 {
@@ -17,39 +21,40 @@ void QRtask(void* parameters)
 {
     QRScanner* QR = (QRScanner*)parameters;
 
-    struct quirc *qr_recognizer;
+    struct quirc *qrRecognizer;
     camera_fb_t* fb = NULL;
     uint8_t *image = NULL;
-    uint16_t old_width = 0;
-    uint16_t old_height = 0;
-    int id_count = 0;
+    uint16_t oldWidth = 0;
+    uint16_t oldHeight = 0;
+    int qrCount = 0;
 
     // Construct a new QR-code recognizer.
     ESP_LOGI(TAG, "Construct a new QR-code recognizer(quirc).");
-    qr_recognizer = quirc_new();
-    if (!qr_recognizer) { ESP_LOGE(TAG, "Can't create quirc object");}
+    qrRecognizer = quirc_new();
+    if (!qrRecognizer) { ESP_LOGE(TAG, "Can't create quirc object");}
 
-    vTaskDelay(pdMS_TO_TICKS(5000));
+    vTaskDelay(QR_TASK_DELAY_MS);
 
     do
     {
         // Capture a frame
         fb = esp_camera_fb_get();
-        if (!fb) {
+        if (!fb) 
+            {
             ESP_LOGE(TAG, "Camera capture failed");
             continue;
         }
 
-        if (old_width != fb->width || old_height != fb->height) {
+        if (oldWidth != fb->width || oldHeight != fb->height) {
             ESP_LOGD(TAG, "Recognizer size change w h len: %d, %d, %d", fb->width, fb->height, fb->len);
             ESP_LOGI(TAG, "Resize the QR-code recognizer.");
             // Resize the QR-code recognizer.
-            if (quirc_resize(qr_recognizer, fb->width, fb->height) < 0) {
+            if (quirc_resize(qrRecognizer, fb->width, fb->height) < 0) {
                 ESP_LOGE(TAG, "Resize the QR-code recognizer err.");
                 continue;
             } else {
-                old_width = fb->width;
-                old_height = fb->height;
+                oldWidth = fb->width;
+                oldHeight = fb->height;
             }
         }
 
@@ -62,26 +67,26 @@ void QRtask(void* parameters)
          * the image for QR-code recognition. The locations and content of each
          * code may be obtained using accessor functions described below.
          */
-        image = quirc_begin(qr_recognizer, NULL, NULL);
+        image = quirc_begin(qrRecognizer, NULL, NULL);
         memcpy(image, fb->buf, fb->len);
-        quirc_end(qr_recognizer);
+        quirc_end(qrRecognizer);
 
         // Return the number of QR-codes identified in the last processed image.
-        id_count = quirc_count(qr_recognizer);
-        if (id_count == 0) {
+        qrCount = quirc_count(qrRecognizer);
+        if (qrCount == 0) {
             ESP_LOGE(TAG, "Error: not a valid qrcode");
             esp_camera_fb_return(fb);
             continue;
         }
 
         // Print information of QR-code
-        QR->dump_info(qr_recognizer, id_count);
+        QR->dumpInfo(qrRecognizer, qrCount);
         esp_camera_fb_return(fb);
     }while(!QR->detect);
     
     // Destroy QR-Code recognizer (quirc)
-    quirc_destroy(qr_recognizer);
-    qr_recognizer = NULL;
+    quirc_destroy(qrRecognizer);
+    qrRecognizer = NULL;
     QR->deleteTask();
 }
 
@@ -92,18 +97,20 @@ char* QRScanner::getPayload()
 
 bool QRScanner::qrDetected()
 {
-    if(this->detect == true)
+    bool retVal = this->detect;
+
+    if(retVal)
     {
         this->detect = false;
-        return true;
+        return retVal;
     }
     else
     {
-        return false;
+        return retVal;
     }
 }
 
-void QRScanner::dump_data(const struct quirc_data *data)
+void QRScanner::dumpData(const struct quirc_data *data)
 {
     ESP_LOGI("Payload: ", "%s", data->payload);
     this->payload = (char *)data->payload;
@@ -111,7 +118,7 @@ void QRScanner::dump_data(const struct quirc_data *data)
 }
 
 
-void QRScanner::dump_info(struct quirc *q, uint8_t count)
+void QRScanner::dumpInfo(struct quirc *q, uint8_t count)
 {
     printf("%d QR-codes found:\n\n", count);
     for (int i = 0; i < count; i++) {
@@ -129,13 +136,13 @@ void QRScanner::dump_info(struct quirc *q, uint8_t count)
             this->detect = false;
         } else {
             ESP_LOGI("Decoding", "%s", "Successfull");
-            dump_data(&data);
+            dumpData(&data);
         }
     }
 }
 
 
-bool QRScanner::jpg2rgb(camera_fb_t *fb, dl_matrix3du_t **image_matrix)
+bool QRScanner::jpg2Rgb(camera_fb_t *fb, dl_matrix3du_t **image_matrix)
 {
 	*image_matrix = dl_matrix3du_alloc(1, fb->width, fb->height, 3);
     
@@ -157,48 +164,49 @@ bool QRScanner::jpg2rgb(camera_fb_t *fb, dl_matrix3du_t **image_matrix)
 	return true;
 }
 
-size_t QRScanner::grayScale(dl_matrix3du_t *image_888,dl_matrix3du_t **gray)
+size_t QRScanner::grayScale(dl_matrix3du_t *rgb888Pixels,dl_matrix3du_t **grayScalePixels)
 {
-    *gray = dl_matrix3du_alloc(1,image_888->w,image_888->h,1);
-	if (!*gray)
+    *grayScalePixels = dl_matrix3du_alloc(1, rgb888Pixels->w, rgb888Pixels->h, 1);
+	if (!*grayScalePixels)
 		return(0);
-	(*gray)->w = image_888->w;
-	(*gray)->h = image_888->h;
-	(*gray)->c = 1;
-	size_t len = image_888->w * image_888->h * image_888->c;
-	size_t lengray=0;
-	for(size_t i=0;i<len;i+=3)
-	{
-		uint8_t r = image_888->item[i];
-		uint8_t g = image_888->item[i+1]; 
-		uint8_t b = image_888->item[i+2];
-		
-        uint8_t m = MAX(r, g);
-		m = MAX(m,b);
-		uint8_t n = MIN(r, g);
-		n = MIN(n,b);
-		uint8_t gr = (m+n)/2;
+	(*grayScalePixels)->w = rgb888Pixels->w;
+	(*grayScalePixels)->h = rgb888Pixels->h;
+	(*grayScalePixels)->c = 1;
+	size_t rgbPixelsLen = rgb888Pixels->w * rgb888Pixels->h * rgb888Pixels->c;
+	size_t grayPixelsLen = 0;
+    uint8_t rgb[RGB_LVLS];
 
-		(*gray)->item[lengray]=gr;
-		lengray++;	
+	for(size_t i=0; i < rgbPixelsLen; i+=3 )
+	{
+		
+        rgb[RED_LVL]    = rgb888Pixels->item[i+RED_LVL];
+		rgb[GREEN_LVL]  = rgb888Pixels->item[i+GREEN_LVL]; 
+		rgb[BLUE_LVL]   = rgb888Pixels->item[i+BLUE_LVL];
+
+        uint8_t maxValue = MAX( MAX(rgb[RED_LVL], rgb[GREEN_LVL]) , rgb[BLUE_LVL]);
+		uint8_t minValue = MIN( MIN(rgb[RED_LVL], rgb[GREEN_LVL]) , rgb[BLUE_LVL]);
+		uint8_t grayPixel = (maxValue+minValue) >> 1;
+
+		(*grayScalePixels)->item[grayPixelsLen] = grayPixel;
+		grayPixelsLen++;	
 	}
-    return(lengray);
+    return(grayPixelsLen);
 }
 
 void QRJPEGtask(void* parameters)
 {
     QRScanner* QR = (QRScanner*)parameters;
 
-    struct quirc *qr_recognizer;
+    struct quirc *qrRecognizer;
     camera_fb_t* fb = NULL;
     uint8_t *image = NULL;
-    uint16_t old_width = 0;
-    uint16_t old_height = 0;
+    uint16_t oldWidth = 0;
+    uint16_t oldHeight = 0;
 
     // Construct a new QR-code recognizer.
     ESP_LOGI(TAG, "Construct a new QR-code recognizer(quirc).");
-    qr_recognizer = quirc_new();
-    if (!qr_recognizer) { ESP_LOGE(TAG, "Can't create quirc object");}
+    qrRecognizer = quirc_new();
+    if (!qrRecognizer) { ESP_LOGE(TAG, "Can't create quirc object");}
 
     do
     {
@@ -210,53 +218,53 @@ void QRJPEGtask(void* parameters)
         }
 
         //JPEG to GrayScale:
-        dl_matrix3du_t *image_rgb;
-        dl_matrix3du_t *image_gray;
-        size_t lengray;
+        dl_matrix3du_t *imageRGB;
+        dl_matrix3du_t *imageGray;
+        size_t grayPixelsLen;
 
-        QR->jpg2rgb(fb, &image_rgb);
-        lengray = QR->grayScale(image_rgb, &image_gray);
-        dl_matrix3du_free(image_rgb);
-        image_rgb = NULL;
+        QR->jpg2Rgb(fb, &imageRGB);
+        grayPixelsLen = QR->grayScale(imageRGB, &imageGray);
+        dl_matrix3du_free(imageRGB);
+        imageRGB = NULL;
         
 
-        if (old_width != image_gray->w|| old_height != image_gray->h) {
-            ESP_LOGD(TAG, "Recognizer size change w h len: %d, %d, %d", image_gray->w, image_gray->h, lengray);
+        if (oldWidth != imageGray->w|| oldHeight != imageGray->h) {
+            ESP_LOGD(TAG, "Recognizer size change w h len: %d, %d, %d", imageGray->w, imageGray->h, grayPixelsLen);
             ESP_LOGI(TAG, "Resize the QR-code recognizer.");
             // Resize the QR-code recognizer.
-            if (quirc_resize(qr_recognizer, image_gray->w, image_gray->h) < 0) {
+            if (quirc_resize(qrRecognizer, imageGray->w, imageGray->h) < 0) {
                 ESP_LOGE(TAG, "Resize the QR-code recognizer err.");
                 return;
             } else {
-                old_width = image_gray->w;
-                old_height = image_gray->h;
+                oldWidth = imageGray->w;
+                oldHeight = imageGray->h;
             }
         }
         
 
         // ESP_LOGI(TAG, "uxHighWaterMark = %d", uxTaskGetStackHighWaterMark( NULL ));
-        image = quirc_begin(qr_recognizer, NULL, NULL);
+        image = quirc_begin(qrRecognizer, NULL, NULL);
         // ESP_LOGI(TAG, "uxHighWaterMark = %d", uxTaskGetStackHighWaterMark( NULL ));
-        memcpy(image, image_gray->item, lengray);
-        dl_matrix3du_free(image_gray);
-        image_gray = NULL;
-        quirc_end(qr_recognizer);
+        memcpy(image, imageGray->item, grayPixelsLen);
+        dl_matrix3du_free(imageGray);
+        imageGray = NULL;
+        quirc_end(qrRecognizer);
         
-        int id_count = 0;
+        int qrCount = 0;
         // Return the number of QR-codes identified in the last processed image.
-        id_count = quirc_count(qr_recognizer);
-        if (id_count == 0) 
+        qrCount = quirc_count(qrRecognizer);
+        if (qrCount == 0) 
         {
             ESP_LOGE(TAG, "Error: NOT A VALID QRCODE!");
             esp_camera_fb_return(fb);
         }
 
         // Print information of QR-code 
-        QR->dump_info(qr_recognizer, id_count);
+        QR->dumpInfo(qrRecognizer, qrCount);
         esp_camera_fb_return(fb);
         
      }while(!QR->detect);
 
-    quirc_destroy(qr_recognizer);
+    quirc_destroy(qrRecognizer);
     QR->deleteTask();
 }

@@ -11,6 +11,8 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
+#define GPIO_TSK_DLY_MS pdMS_TO_TICKS(10)
+
 class IO
 {
     private:
@@ -25,6 +27,7 @@ class IO
     void setHIGH();
     void setLOW();
     int  getState();
+    void setState(int state);
 
 };
 

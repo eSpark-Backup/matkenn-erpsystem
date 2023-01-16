@@ -11,6 +11,10 @@ void FIREBASE::sendQRData(char* payload, char* timestamp)
         new_data["Time"] = timestamp;
         db.putData("/QRScan", new_data);
     }
+    else if(!clientStatus)
+    {
+        return;
+    }
 }
 
 void FIREBASE::startClient()
