@@ -27,8 +27,8 @@ void ERPSystemIO::run()
 
 void ERPSystemIO::taskDelete(TaskHandle_t * GPIOtaskHandle)
 {
-    led1.setLOW();
-    led2.setLOW();
+    led1.setState(0);
+    led2.setState(0);
     vTaskDelete(*GPIOtaskHandle);
     *GPIOtaskHandle = NULL;
 }

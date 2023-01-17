@@ -3,7 +3,7 @@
 Camera camera;
 QRScanner QR;
 ERPSystemIO gpio;
-SNTP QRtime;
+SNTP sntp;
 WIFINETWORK wifi(WIFI_SSID, WIFI_PW);
 
 TaskHandle_t gpioTaskHandle;
@@ -12,7 +12,7 @@ extern "C" void app_main(void)
 {
     wifi.Connect();
     FIREBASE fireBase(API_KEY, DATABASE_URL);
-    QRtime.setSystemTime();
+    sntp.setSystemTime();
 
     camera.setup();
     QR.createTask(&QR);
@@ -26,7 +26,7 @@ extern "C" void app_main(void)
     {
         if(QR.qrDetected())
         {
-            timestamp = QRtime.getCurrentTime();
+            timestamp = sntp.getCurrentTime();
             payload = QR.getPayload();
 
             fireBase.startClient();

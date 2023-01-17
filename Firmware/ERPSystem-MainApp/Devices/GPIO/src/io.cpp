@@ -50,17 +50,6 @@ bool IO::outputMode()
         return false;
     }
 }
-
-void IO::setHIGH()
-{
-    gpio_set_level(this->number, 1);
-}
-
-void IO::setLOW()
-{
-    gpio_set_level(this->number, 0);
-}
-
 int IO::getState()
 {
     return (gpio_get_level(number));
@@ -68,13 +57,6 @@ int IO::getState()
 
 void IO::setState(int state)
 {
-    if(state)
-    {
-        this->setHIGH();
-    }
-    else
-    {
-        this->setLOW();
-    }
+   gpio_set_level(this->number, state);
 }
 

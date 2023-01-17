@@ -24,8 +24,6 @@ class IO
     void setPin(gpio_num_t number);
     bool inputMode();
     bool outputMode();
-    void setHIGH();
-    void setLOW();
     int  getState();
     void setState(int state);
 

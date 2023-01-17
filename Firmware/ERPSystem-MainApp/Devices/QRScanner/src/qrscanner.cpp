@@ -98,16 +98,8 @@ char* QRScanner::getPayload()
 bool QRScanner::qrDetected()
 {
     bool retVal = this->detect;
-
-    if(retVal)
-    {
-        this->detect = false;
-        return retVal;
-    }
-    else
-    {
-        return retVal;
-    }
+    this->detect = false;
+    return retVal;
 }
 
 void QRScanner::dumpData(const struct quirc_data *data)

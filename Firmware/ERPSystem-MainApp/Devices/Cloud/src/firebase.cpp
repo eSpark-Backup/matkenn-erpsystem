@@ -2,7 +2,11 @@
 
 void FIREBASE::sendQRData(char* payload, char* timestamp)
 {
-    if(clientStatus)
+    if(!clientStatus)
+    {
+        return;
+    }
+    else
     {
         FirebaseApp app = FirebaseApp(API_KEY);
         RTDB db = RTDB(&app, DATABASE_URL);
@@ -11,10 +15,7 @@ void FIREBASE::sendQRData(char* payload, char* timestamp)
         new_data["Time"] = timestamp;
         db.putData("/QRScan", new_data);
     }
-    else if(!clientStatus)
-    {
-        return;
-    }
+    
 }
 
 void FIREBASE::startClient()
