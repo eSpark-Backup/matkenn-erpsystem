@@ -3,12 +3,12 @@
 #define TAG "QRScanner"
 #define RGB_LVLS 3
 #define RED_LVL 0
-#define GREEN_LVL 1
-#define BLUE_LVL 2
+#define GRN_LVL 1
+#define BLU_LVL 2
 
-void QRScanner::createTask(QRScanner* QR)
+void QRScanner::createTask()
 {
-    xTaskCreatePinnedToCore((TaskFunction_t)QRtask, "QRtask", 1024 * 40, (void*) QR, 7, &(this->qrTaskHandle), (BaseType_t)0);
+    xTaskCreatePinnedToCore((TaskFunction_t)QRtask, "QRtask", 1024 * 40, (void*) this, 7, &(this->qrTaskHandle), (BaseType_t)0);
 }
 
 void QRScanner::deleteTask()
@@ -171,12 +171,12 @@ size_t QRScanner::grayScale(dl_matrix3du_t *rgb888Pixels,dl_matrix3du_t **graySc
 	for(size_t i=0; i < rgbPixelsLen; i+=3 )
 	{
 		
-        rgb[RED_LVL]    = rgb888Pixels->item[i+RED_LVL];
-		rgb[GREEN_LVL]  = rgb888Pixels->item[i+GREEN_LVL]; 
-		rgb[BLUE_LVL]   = rgb888Pixels->item[i+BLUE_LVL];
+        rgb[RED_LVL] = rgb888Pixels->item[i+RED_LVL];
+		rgb[GRN_LVL] = rgb888Pixels->item[i+GRN_LVL]; 
+		rgb[BLU_LVL] = rgb888Pixels->item[i+BLU_LVL];
 
-        uint8_t maxValue = MAX( MAX(rgb[RED_LVL], rgb[GREEN_LVL]) , rgb[BLUE_LVL]);
-		uint8_t minValue = MIN( MIN(rgb[RED_LVL], rgb[GREEN_LVL]) , rgb[BLUE_LVL]);
+        uint8_t maxValue = MAX( MAX(rgb[RED_LVL], rgb[GRN_LVL]) , rgb[BLU_LVL]);
+		uint8_t minValue = MIN( MIN(rgb[RED_LVL], rgb[GRN_LVL]) , rgb[BLU_LVL]);
 		uint8_t grayPixel = (maxValue+minValue) >> 1;
 
 		(*grayScalePixels)->item[grayPixelsLen] = grayPixel;

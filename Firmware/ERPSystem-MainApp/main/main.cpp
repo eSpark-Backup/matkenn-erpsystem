@@ -1,7 +1,5 @@
 #include "main.hpp"
 
-Camera camera;
-QRScanner QR;
 ERPSystemIO gpio;
 SNTP sntp;
 WIFINETWORK wifi(WIFI_SSID, WIFI_PW);
@@ -14,8 +12,8 @@ extern "C" void app_main(void)
     FIREBASE fireBase(API_KEY, DATABASE_URL);
     sntp.setSystemTime();
 
-    camera.setup();
-    QR.createTask(&QR);
+    QRScanner QR;
+    QR.createTask();
     
     char* payload;
     char* timestamp;
@@ -35,7 +33,7 @@ extern "C" void app_main(void)
         if(fireBase.getClientStatus())
         {
             fireBase.stopClient();
-            QR.createTask(&QR);
+            QR.createTask();
         }
  
         vTaskDelay(10/portTICK_RATE_MS);

@@ -2,7 +2,8 @@ set(SOURCES src/qrscanner.cpp)
 
 idf_component_register( SRCS ${SOURCES}
                         INCLUDE_DIRS "include"
-                        REQUIRES quirc esp32-camera )
+                        REQUIRES quirc Camera 
+                        PRIV_REQUIRES esp32-camera)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-error)
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wdeprecated-declarations)

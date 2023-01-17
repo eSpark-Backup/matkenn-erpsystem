@@ -5,7 +5,7 @@
 #include <esp_system.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_camera.h"
+#include "Camera.hpp"
 #include "quirc.h"
 #include "quirc_internal.h"
 #include "dl_lib_matrix3d.h"
@@ -18,16 +18,19 @@ void QRJPEGtask(void* parameters);
 class QRScanner
 {
     private:
+    Camera camera;
     char* payload;
     TaskHandle_t qrTaskHandle;
 
     public:
         bool detect = false;
-
-        void setup();
+        QRScanner()
+        {
+            camera.setup();
+        }
         bool qrDetected();
         char* getPayload();
-        void createTask(QRScanner* QR);
+        void createTask();
         void deleteTask();
         void dumpData(const struct quirc_data *data);
         void dumpInfo(struct quirc *q, uint8_t count);
