@@ -14,13 +14,13 @@
 #include "lwip/sys.h"
 #include "esp_err.h"
 
-// #define WIFI_SSID "eSpark Wifi"
-// #define WIFI_PW "47356880"
+#define WIFI_SSID "eSpark Wifi"
+#define WIFI_PW "47356880"
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY 5
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
-#define WIFI_TAG "wifi station"
+#define WIFI_TAG "WIFINETWORK"
 
 class WIFINETWORK
 {

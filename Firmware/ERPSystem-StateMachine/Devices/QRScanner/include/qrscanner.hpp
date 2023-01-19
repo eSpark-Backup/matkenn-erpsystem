@@ -10,18 +10,10 @@
 #include "quirc_internal.h"
 #include "dl_lib_matrix3d.h"
 
-#define QR_TASK_DELAY_MS pdMS_TO_TICKS(5000)
+#define QR_TASK_DELAY_MS pdMS_TO_TICKS(10)
 
 void QRtask(void* parameters);
 void QRJPEGtask(void* parameters);
-
-enum qrState
-{
-    eCameraCapture,
-    eImageResizing,
-    eQrDetect,
-    eQrExtract
-};
 
 class QRScanner
 {
@@ -40,11 +32,7 @@ class QRScanner
         uint16_t oldHeight;
         
         void setup();
-        void loop();
-        bool detectQR();
-        bool extractQR();
         bool scan();
-        bool scanQR();
         bool isDetected();
         char* getPayload();
         void createTask();

@@ -26,70 +26,6 @@ void QRScanner::setup()
     }
 }
 
-void QRScanner::loop()
-{
-    // static qrState qrScannerState = eQrDetect;
-    // switch (qrScannerState)
-    // {
-    //     case eQrDetect:
-    //         if(detectQR()) { qrScannerState = eQrExtract;}
-    //         break;
-
-    //     case eQrExtract:
-    //         extractQR();
-    //         qrScannerState = eQrDetect;
-    //         break;
-    // }
-}
-
-bool QRScanner::detectQR()
-{
-    //Capture Image
-    fb = esp_camera_fb_get();
-    if(!fb)
-    {
-        ESP_LOGE(TAG, "Camera capture failed");
-        return false;
-    }
-
-    //Image Resizing
-    if (oldWidth != fb->width || oldHeight != fb->height)
-    {
-      if (quirc_resize(qrRecognizer, fb->width, fb->height) < 0)
-      {
-        ESP_LOGE(TAG, "Resize the QR-code recognizer err (cannot allocate memory).");
-        esp_camera_fb_return(fb);
-        return false;
-      }
-      else
-      {
-        oldWidth = fb->width;
-        oldHeight = fb->height;
-      }
-    }
-
-    // QR Identification:
-    image = quirc_begin(qrRecognizer, NULL, NULL);
-    memcpy(image, fb->buf, fb->len);
-    quirc_end(qrRecognizer);
-
-    qrCount = quirc_count(qrRecognizer);
-    esp_camera_fb_return(fb);
-    if (qrCount > 0)
-    {
-        return true;
-    }
-    return false;
-}
-
-bool QRScanner::extractQR()
-{
-    //Payload Extraction
-    dumpInfo(qrRecognizer, qrCount);
-    // esp_camera_fb_return(fb);
-    return true;
-}
-
 bool QRScanner::scan()
 {
     //Capture Image
@@ -125,156 +61,10 @@ bool QRScanner::scan()
     int count = quirc_count(qrRecognizer);
     if (count)
     {
-        // esp_camera_fb_return(fb);
-        // return false;
         if(dumpInfo(qrRecognizer, count)) {return true;}
     }
 
     return false;
-    // else
-    // {
-    //     if(dumpInfo(qrRecognizer, count)) {return true;}
-    //     return false;
-    // }
-
-    
-    //Payload Extraction
-    // dumpInfo(qrRecognizer, count);
-    // esp_camera_fb_return(fb);
-}
-
-bool QRScanner::scanQR()
-{
-    //Capture Image
-    ESP_LOGI("timestamp1","%lld", esp_timer_get_time());
-    fb = esp_camera_fb_get();
-    if(!fb)
-    {
-        ESP_LOGE(TAG, "Camera capture failed");
-        return false;
-    }
-    ESP_LOGI("timestamp2","%lld", esp_timer_get_time());
-    // 0.3Secs
-
-    //Image Resizing
-    // if (oldWidth != fb->width || oldHeight != fb->height)
-    // {
-    //   if (quirc_resize(qrRecognizer, fb->width, fb->height) < 0)
-    //   {
-    //     ESP_LOGE(TAG, "Resize the QR-code recognizer err (cannot allocate memory).");
-    //     esp_camera_fb_return(fb);
-    //     return false;
-    //   }
-    //   else
-    //   {
-    //     oldWidth = fb->width;
-    //     oldHeight = fb->height;
-    //   }
-    // }
-    
-    // // QR Identification:
-    // image = quirc_begin(qrRecognizer, NULL, NULL);
-    // memcpy(image, fb->buf, fb->len);
-    // quirc_end(qrRecognizer);
-
-    // int count = quirc_count(qrRecognizer);
-    // if (count == 0)
-    // {
-    //     esp_camera_fb_return(fb);
-    //     return;
-    // }
-
-    // //Payload Extraction
-    // dumpInfo(qrRecognizer, count);
-    ESP_LOGI("timestamp3","%lld", esp_timer_get_time());
-    esp_camera_fb_return(fb);
-    ESP_LOGI("timestamp4","%lld", esp_timer_get_time());
-    return true;
-}
-
-
-void QRScanner::createTask()
-{
-    xTaskCreatePinnedToCore((TaskFunction_t)QRtask, "QRtask", 1024 * 40, (void*) this, 7, &(this->qrTaskHandle), (BaseType_t)0);
-}
-
-void QRScanner::deleteTask()
-{
-    vTaskDelete((this->qrTaskHandle));
-    this->qrTaskHandle = NULL;
-}
-
-void QRtask(void* parameters)
-{
-    QRScanner* QR = (QRScanner*)parameters;
-
-    struct quirc *qrRecognizer;
-    camera_fb_t* fb = NULL;
-    uint8_t *image = NULL;
-    uint16_t oldWidth = 0;
-    uint16_t oldHeight = 0;
-    int qrCount = 0;
-
-    // Construct a new QR-code recognizer.
-    ESP_LOGI(TAG, "Construct a new QR-code recognizer(quirc).");
-    qrRecognizer = quirc_new();
-    if (!qrRecognizer) { ESP_LOGE(TAG, "Can't create quirc object");}
-
-    vTaskDelay(QR_TASK_DELAY_MS);
-
-    do
-    {
-        // Capture a frame
-        fb = esp_camera_fb_get();
-        if (!fb) 
-            {
-            ESP_LOGE(TAG, "Camera capture failed");
-            continue;
-        }
-
-        if (oldWidth != fb->width || oldHeight != fb->height) {
-            ESP_LOGD(TAG, "Recognizer size change w h len: %d, %d, %d", fb->width, fb->height, fb->len);
-            ESP_LOGI(TAG, "Resize the QR-code recognizer.");
-            // Resize the QR-code recognizer.
-            if (quirc_resize(qrRecognizer, fb->width, fb->height) < 0) {
-                ESP_LOGE(TAG, "Resize the QR-code recognizer err.");
-                continue;
-            } else {
-                oldWidth = fb->width;
-                oldHeight = fb->height;
-            }
-        }
-
-        /** These functions are used to process images for QR-code recognition.
-         * quirc_begin() must first be called to obtain access to a buffer into
-         * which the input image should be placed. Optionally, the current
-         * width and height may be returned.
-         *
-         * After filling the buffer, quirc_end() should be called to process
-         * the image for QR-code recognition. The locations and content of each
-         * code may be obtained using accessor functions described below.
-         */
-        image = quirc_begin(qrRecognizer, NULL, NULL);
-        memcpy(image, fb->buf, fb->len);
-        quirc_end(qrRecognizer);
-
-        // Return the number of QR-codes identified in the last processed image.
-        qrCount = quirc_count(qrRecognizer);
-        if (qrCount == 0) {
-            ESP_LOGE(TAG, "Error: not a valid qrcode");
-            esp_camera_fb_return(fb);
-            continue;
-        }
-
-        // Decoding QR-code
-        QR->dumpInfo(qrRecognizer, qrCount);
-        esp_camera_fb_return(fb);
-    }while(!QR->detect);
-    
-    // Destroy QR-Code recognizer (quirc)
-    quirc_destroy(qrRecognizer);
-    qrRecognizer = NULL;
-    QR->deleteTask();
 }
 
 char* QRScanner::getPayload()
@@ -377,6 +167,35 @@ size_t QRScanner::grayScale(dl_matrix3du_t *rgb888Pixels,dl_matrix3du_t **graySc
 		grayPixelsLen++;	
 	}
     return(grayPixelsLen);
+}
+
+void QRScanner::createTask()
+{
+    xTaskCreatePinnedToCore((TaskFunction_t)QRtask, "QRtask", 1024 * 40, (void*) this, 7, &(this->qrTaskHandle), (BaseType_t)0);
+}
+
+void QRScanner::deleteTask()
+{
+    // Destroy QR-Code recognizer (quirc)
+    quirc_destroy(qrRecognizer);
+    qrRecognizer = NULL;
+
+    //Delete the Tasks
+    vTaskDelete((this->qrTaskHandle));
+    this->qrTaskHandle = NULL;
+}
+
+void QRtask(void* parameters)
+{
+    QRScanner* QR = (QRScanner*)parameters;
+
+    QR->setup();
+
+    while(1)
+    {
+        QR->scan();
+        vTaskDelay(QR_TASK_DELAY_MS);
+    }
 }
 
 void QRJPEGtask(void* parameters)

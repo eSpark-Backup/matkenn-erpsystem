@@ -28,7 +28,7 @@ bool SNTP::setup(void)
         ESP_LOGI(TAG, "Waiting for system time to be set... (%d)", retry);
         retry++;
         vTaskDelay(SNTP_SYNC_DELAY);
-    } while (retry < 10);
+    } while (retry < 20);
 
     return false;
 }
