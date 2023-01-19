@@ -1,31 +1,32 @@
 #include "main.hpp"
 
+TaskHandle_t gpioTaskHandle;
+
 extern "C" void app_main(void)
 {
-    WIFINETWORK wifi(WIFI_SSID, WIFI_PW);
-    wifi.Connect();
-
     FIREBASE fireBase(API_KEY, DATABASE_URL);
     fireBase.startClient();
 
     SNTP sntp;
-    sntp.setSystemTime();
+    sntp.setup();
 
     QRScanner* QR = new QRScanner;
     QR->setup();
 
-    char* payload, timestamp;
+    ERPSystemIO gpio;
+    xTaskCreate(gpioActuation, "gpioActuation", 1024 * 2, &gpio, 8, &gpioTaskHandle);
 
+    char* payload;
+    char* timestamp;
+    
     while(1)
     {
-        QR->scan();
-        if(QR->isDetected())
+        if(QR->scan())
         {
-            timestamp = sntp.getCurrentTime();
             payload = QR->getPayload();
+            timestamp = sntp.getCurrentTime();
 
             fireBase.sendQRData(payload, timestamp);
         }
-        vTaskDelay(1000/portTICK_RATE_MS);
     }
 }

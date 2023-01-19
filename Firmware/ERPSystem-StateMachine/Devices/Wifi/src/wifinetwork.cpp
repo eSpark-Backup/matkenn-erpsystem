@@ -4,7 +4,7 @@
 static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 
-void WIFINETWORK::Connect()
+bool WIFINETWORK::connect()
 {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) 
@@ -14,13 +14,15 @@ void WIFINETWORK::Connect()
     }
     ESP_ERROR_CHECK(ret);
     ESP_LOGI(WIFI_TAG, "ESP_WIFI_MODE_STA");
-    if(wifiInit(this->ssid, this->password))
+    if(setup(this->ssid, this->password))
+    {
         ESP_LOGI(TAG,"WIFI CONNECTED SUCCESSFULLY");
+        return true;
+    }
     else
-        while(1)
-        {
-            vTaskDelay(10/portTICK_RATE_MS);
-        }
+    {
+        return false;
+    }
 }
 
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) 
@@ -52,7 +54,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-bool WIFINETWORK::wifiInit(const char* ssid, const char* password) {
+bool WIFINETWORK::setup(const char* ssid, const char* password) {
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());

@@ -1,3 +1,5 @@
+#ifndef FIREBASE_CONFIG_H
+#define FIREBASE_CONFIG_H
 // Wifi Credentials
 #define SSID "eSpark Wifi"
 #define PASSWORD "47356880"
@@ -11,3 +13,5 @@
 
 #define USER_EMAIL "espark.electronics1@gmail.com"   // This gmail does not exist outside your database. it only exists in the firebase project as a user
 #define USER_PASSWORD "esparkELECTRONICS$%^456"      // Dont add your gmail credentials. Setup users authentication in your Firebase project first
+
+#endif

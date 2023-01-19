@@ -14,8 +14,8 @@
 #include "lwip/sys.h"
 #include "esp_err.h"
 
-#define WIFI_SSID "eSpark Wifi"
-#define WIFI_PW "47356880"
+// #define WIFI_SSID "eSpark Wifi"
+// #define WIFI_PW "47356880"
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY 5
 #define WIFI_CONNECTED_BIT BIT0
@@ -30,9 +30,8 @@ class WIFINETWORK
 
     public:
     WIFINETWORK(char* ssid, char* pass) : ssid(ssid) , password(pass){}
-    
-    bool wifiInit(const char* ssid, const char* password);
-    void Connect();
+    bool connect();
+    bool setup(const char* ssid, const char* password);
 };
 
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);

@@ -32,6 +32,9 @@
         "random": "cpp",
         "bitset": "cpp",
         "algorithm": "cpp",
-        "esp_timer.h": "c"
+        "esp_timer.h": "c",
+        "condition_variable": "c",
+        "future": "c",
+        "*.ipp": "cpp"
     }
 }

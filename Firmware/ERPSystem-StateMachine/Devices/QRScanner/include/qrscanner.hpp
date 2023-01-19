@@ -17,6 +17,8 @@ void QRJPEGtask(void* parameters);
 
 enum qrState
 {
+    eCameraCapture,
+    eImageResizing,
     eQrDetect,
     eQrExtract
 };
@@ -41,13 +43,14 @@ class QRScanner
         void loop();
         bool detectQR();
         bool extractQR();
-        void scan();
+        bool scan();
+        bool scanQR();
         bool isDetected();
         char* getPayload();
         void createTask();
         void deleteTask();
         void dumpData(const struct quirc_data *data);
-        void dumpInfo(struct quirc *q, uint8_t count);
+        bool dumpInfo(struct quirc *q, uint8_t count);
         bool jpg2Rgb(camera_fb_t *fb, dl_matrix3du_t **image_matrix);
         size_t grayScale(dl_matrix3du_t *image_888,dl_matrix3du_t **gray);
         

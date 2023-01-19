@@ -28,18 +28,18 @@ void QRScanner::setup()
 
 void QRScanner::loop()
 {
-    static qrState qrScannerState = eQrDetect;
-    switch (qrScannerState)
-    {
-        case eQrDetect:
-            if(detectQR()) { qrScannerState = eQrExtract;}
-            break;
+    // static qrState qrScannerState = eQrDetect;
+    // switch (qrScannerState)
+    // {
+    //     case eQrDetect:
+    //         if(detectQR()) { qrScannerState = eQrExtract;}
+    //         break;
 
-        case eQrExtract:
-            extractQR();
-            qrScannerState = eQrDetect;
-            break;
-    }
+    //     case eQrExtract:
+    //         extractQR();
+    //         qrScannerState = eQrDetect;
+    //         break;
+    // }
 }
 
 bool QRScanner::detectQR()
@@ -90,14 +90,14 @@ bool QRScanner::extractQR()
     return true;
 }
 
-void QRScanner::scan()
+bool QRScanner::scan()
 {
     //Capture Image
     fb = esp_camera_fb_get();
     if(!fb)
     {
         ESP_LOGE(TAG, "Camera capture failed");
-        return;
+        return false;
     }
 
     //Image Resizing
@@ -107,7 +107,7 @@ void QRScanner::scan()
       {
         ESP_LOGE(TAG, "Resize the QR-code recognizer err (cannot allocate memory).");
         esp_camera_fb_return(fb);
-        return;
+        return false;
       }
       else
       {
@@ -115,24 +115,83 @@ void QRScanner::scan()
         oldHeight = fb->height;
       }
     }
-    
+
     // QR Identification:
     image = quirc_begin(qrRecognizer, NULL, NULL);
     memcpy(image, fb->buf, fb->len);
     quirc_end(qrRecognizer);
+    esp_camera_fb_return(fb);
 
     int count = quirc_count(qrRecognizer);
-    if (count == 0)
+    if (count)
     {
-        esp_camera_fb_return(fb);
-        return;
+        // esp_camera_fb_return(fb);
+        // return false;
+        if(dumpInfo(qrRecognizer, count)) {return true;}
     }
 
+    return false;
+    // else
+    // {
+    //     if(dumpInfo(qrRecognizer, count)) {return true;}
+    //     return false;
+    // }
+
+    
     //Payload Extraction
-    dumpInfo(qrRecognizer, count);
-    esp_camera_fb_return(fb);
-    return;
+    // dumpInfo(qrRecognizer, count);
+    // esp_camera_fb_return(fb);
 }
+
+bool QRScanner::scanQR()
+{
+    //Capture Image
+    ESP_LOGI("timestamp1","%lld", esp_timer_get_time());
+    fb = esp_camera_fb_get();
+    if(!fb)
+    {
+        ESP_LOGE(TAG, "Camera capture failed");
+        return false;
+    }
+    ESP_LOGI("timestamp2","%lld", esp_timer_get_time());
+    // 0.3Secs
+
+    //Image Resizing
+    // if (oldWidth != fb->width || oldHeight != fb->height)
+    // {
+    //   if (quirc_resize(qrRecognizer, fb->width, fb->height) < 0)
+    //   {
+    //     ESP_LOGE(TAG, "Resize the QR-code recognizer err (cannot allocate memory).");
+    //     esp_camera_fb_return(fb);
+    //     return false;
+    //   }
+    //   else
+    //   {
+    //     oldWidth = fb->width;
+    //     oldHeight = fb->height;
+    //   }
+    // }
+    
+    // // QR Identification:
+    // image = quirc_begin(qrRecognizer, NULL, NULL);
+    // memcpy(image, fb->buf, fb->len);
+    // quirc_end(qrRecognizer);
+
+    // int count = quirc_count(qrRecognizer);
+    // if (count == 0)
+    // {
+    //     esp_camera_fb_return(fb);
+    //     return;
+    // }
+
+    // //Payload Extraction
+    // dumpInfo(qrRecognizer, count);
+    ESP_LOGI("timestamp3","%lld", esp_timer_get_time());
+    esp_camera_fb_return(fb);
+    ESP_LOGI("timestamp4","%lld", esp_timer_get_time());
+    return true;
+}
+
 
 void QRScanner::createTask()
 {
@@ -238,7 +297,7 @@ void QRScanner::dumpData(const struct quirc_data *data)
 }
 
 
-void QRScanner::dumpInfo(struct quirc *q, uint8_t count)
+bool QRScanner::dumpInfo(struct quirc *q, uint8_t count)
 {
     ESP_LOGI(TAG,"%d QR-codes found\n\n", count);
     for (int i = 0; i < count; i++) 
@@ -256,13 +315,16 @@ void QRScanner::dumpInfo(struct quirc *q, uint8_t count)
         {
             ESP_LOGI("Decoding", "FAILED , %s", quirc_strerror(err));
             this->detect = false;
+            return false;
         } 
         else 
         {
             ESP_LOGI("Decoding", "%s", "Successfull");
             dumpData(&data);
+            return true;
         }
     }
+    return false;
 }
 
 
