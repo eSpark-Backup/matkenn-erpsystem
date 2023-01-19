@@ -15,6 +15,12 @@
 void QRtask(void* parameters);
 void QRJPEGtask(void* parameters);
 
+enum qrState
+{
+    eQrDetect,
+    eQrExtract
+};
+
 class QRScanner
 {
     private:
@@ -26,13 +32,17 @@ class QRScanner
         struct quirc *qrRecognizer;
         camera_fb_t* fb;
         uint8_t *image;
+        uint8_t qrCount;
         bool detect = false;
         uint16_t oldWidth;
         uint16_t oldHeight;
         
         void setup();
+        void loop();
+        bool detectQR();
+        bool extractQR();
         void scan();
-        bool qrDetected();
+        bool isDetected();
         char* getPayload();
         void createTask();
         void deleteTask();

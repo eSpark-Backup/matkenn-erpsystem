@@ -31,6 +31,7 @@
         "utility": "cpp",
         "random": "cpp",
         "bitset": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "esp_timer.h": "c"
     }
 }

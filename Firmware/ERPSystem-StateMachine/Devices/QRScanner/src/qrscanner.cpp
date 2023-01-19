@@ -14,6 +14,7 @@ void QRScanner::setup()
     qrRecognizer = NULL;
     fb = NULL;
     image = NULL;
+    qrCount = 0;
     oldWidth = 0;
     oldHeight = 0;
 
@@ -23,6 +24,70 @@ void QRScanner::setup()
     {
         ESP_LOGE(TAG, "Can't create quirc object");
     }
+}
+
+void QRScanner::loop()
+{
+    static qrState qrScannerState = eQrDetect;
+    switch (qrScannerState)
+    {
+        case eQrDetect:
+            if(detectQR()) { qrScannerState = eQrExtract;}
+            break;
+
+        case eQrExtract:
+            extractQR();
+            qrScannerState = eQrDetect;
+            break;
+    }
+}
+
+bool QRScanner::detectQR()
+{
+    //Capture Image
+    fb = esp_camera_fb_get();
+    if(!fb)
+    {
+        ESP_LOGE(TAG, "Camera capture failed");
+        return false;
+    }
+
+    //Image Resizing
+    if (oldWidth != fb->width || oldHeight != fb->height)
+    {
+      if (quirc_resize(qrRecognizer, fb->width, fb->height) < 0)
+      {
+        ESP_LOGE(TAG, "Resize the QR-code recognizer err (cannot allocate memory).");
+        esp_camera_fb_return(fb);
+        return false;
+      }
+      else
+      {
+        oldWidth = fb->width;
+        oldHeight = fb->height;
+      }
+    }
+
+    // QR Identification:
+    image = quirc_begin(qrRecognizer, NULL, NULL);
+    memcpy(image, fb->buf, fb->len);
+    quirc_end(qrRecognizer);
+
+    qrCount = quirc_count(qrRecognizer);
+    esp_camera_fb_return(fb);
+    if (qrCount > 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool QRScanner::extractQR()
+{
+    //Payload Extraction
+    dumpInfo(qrRecognizer, qrCount);
+    // esp_camera_fb_return(fb);
+    return true;
 }
 
 void QRScanner::scan()
@@ -50,7 +115,7 @@ void QRScanner::scan()
         oldHeight = fb->height;
       }
     }
-
+    
     // QR Identification:
     image = quirc_begin(qrRecognizer, NULL, NULL);
     memcpy(image, fb->buf, fb->len);
@@ -142,7 +207,7 @@ void QRtask(void* parameters)
             continue;
         }
 
-        // Print information of QR-code
+        // Decoding QR-code
         QR->dumpInfo(qrRecognizer, qrCount);
         esp_camera_fb_return(fb);
     }while(!QR->detect);
@@ -158,7 +223,7 @@ char* QRScanner::getPayload()
     return this->payload; 
 }
 
-bool QRScanner::qrDetected()
+bool QRScanner::isDetected()
 {
     bool retVal = this->detect;
     this->detect = false;
@@ -175,8 +240,9 @@ void QRScanner::dumpData(const struct quirc_data *data)
 
 void QRScanner::dumpInfo(struct quirc *q, uint8_t count)
 {
-    printf("%d QR-codes found:\n\n", count);
-    for (int i = 0; i < count; i++) {
+    ESP_LOGI(TAG,"%d QR-codes found\n\n", count);
+    for (int i = 0; i < count; i++) 
+    {
         struct quirc_code code;
         struct quirc_data data;
 
@@ -186,10 +252,13 @@ void QRScanner::dumpInfo(struct quirc *q, uint8_t count)
         //Decode a QR-code, returning the payload data.
         quirc_decode_error_t err = quirc_decode(&code, &data);
 
-        if (err) {
+        if (err) 
+        {
             ESP_LOGI("Decoding", "FAILED , %s", quirc_strerror(err));
             this->detect = false;
-        } else {
+        } 
+        else 
+        {
             ESP_LOGI("Decoding", "%s", "Successfull");
             dumpData(&data);
         }
