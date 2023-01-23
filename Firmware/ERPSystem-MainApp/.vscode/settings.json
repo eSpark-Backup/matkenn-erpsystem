@@ -29,6 +29,13 @@
         "tuple": "cpp",
         "type_traits": "cpp",
         "utility": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "bitset": "cpp",
+        "algorithm": "cpp",
+        "esp_timer.h": "c",
+        "condition_variable": "c",
+        "future": "c",
+        "*.ipp": "cpp",
+        "complex": "cpp"
     }
 }

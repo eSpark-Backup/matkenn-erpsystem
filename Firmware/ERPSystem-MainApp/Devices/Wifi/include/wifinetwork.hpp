@@ -20,7 +20,7 @@
 #define EXAMPLE_ESP_MAXIMUM_RETRY 5
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
-#define WIFI_TAG "wifi station"
+#define WIFI_TAG "WIFINETWORK"
 
 class WIFINETWORK
 {
@@ -30,11 +30,10 @@ class WIFINETWORK
 
     public:
     WIFINETWORK(char* ssid, char* pass) : ssid(ssid) , password(pass){}
-    
-    bool wifiInit(const char* ssid, const char* password);
-    void Connect();
+    bool connect();
+    bool setup(const char* ssid, const char* password);
 };
 
-static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
+static void wifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t eventID, void *eventData);
 
 #endif

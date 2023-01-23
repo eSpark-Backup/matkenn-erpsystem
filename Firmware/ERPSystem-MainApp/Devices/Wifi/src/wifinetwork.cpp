@@ -1,10 +1,14 @@
 #include "wifinetwork.hpp"
 
 #define TAG "WIFI"
-static EventGroupHandle_t s_wifi_event_group;
-static int s_retry_num = 0;
+static EventGroupHandle_t wifiEventGroup;
+static int retryNum = 0;
 
-void WIFINETWORK::Connect()
+/*
+    All the functions are called from the ESPIDF base library, which have a different naming convention.
+*/
+
+bool WIFINETWORK::connect()
 {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) 
@@ -14,46 +18,48 @@ void WIFINETWORK::Connect()
     }
     ESP_ERROR_CHECK(ret);
     ESP_LOGI(WIFI_TAG, "ESP_WIFI_MODE_STA");
-    if(wifiInit(this->ssid, this->password))
+    if(setup(this->ssid, this->password))
+    {
         ESP_LOGI(TAG,"WIFI CONNECTED SUCCESSFULLY");
+        return true;
+    }
     else
-        while(1)
-        {
-            vTaskDelay(10/portTICK_RATE_MS);
-        }
+    {
+        return false;
+    }
 }
 
-static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) 
+static void wifiEventHandler(void *arg, esp_event_base_t eventBase, int32_t eventID, void *eventData) 
 {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) 
+    if (eventBase == WIFI_EVENT && eventID == WIFI_EVENT_STA_START) 
     {
         esp_wifi_connect();
     } 
-    else if (event_base == WIFI_EVENT &&event_id == WIFI_EVENT_STA_DISCONNECTED) 
+    else if (eventBase == WIFI_EVENT &&eventID == WIFI_EVENT_STA_DISCONNECTED) 
     {
-        if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) 
+        if (retryNum < EXAMPLE_ESP_MAXIMUM_RETRY) 
         {
             esp_wifi_connect();
-            s_retry_num++;
+            retryNum++;
             ESP_LOGI(WIFI_TAG, "retry to connect to the AP");
         } 
         else 
         {
-            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+            xEventGroupSetBits(wifiEventGroup, WIFI_FAIL_BIT);
         }
         ESP_LOGI(WIFI_TAG, "connect to the AP fail");
     } 
-    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) 
+    else if (eventBase == IP_EVENT && eventID == IP_EVENT_STA_GOT_IP) 
     {
-        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *)eventData;
         ESP_LOGI(WIFI_TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
-        s_retry_num = 0;
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        retryNum = 0;
+        xEventGroupSetBits(wifiEventGroup, WIFI_CONNECTED_BIT);
     }
 }
 
-bool WIFINETWORK::wifiInit(const char* ssid, const char* password) {
-    s_wifi_event_group = xEventGroupCreate();
+bool WIFINETWORK::setup(const char* ssid, const char* password) {
+    wifiEventGroup = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
 
@@ -65,8 +71,8 @@ bool WIFINETWORK::wifiInit(const char* ssid, const char* password) {
 
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifiEventHandler, NULL, &instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifiEventHandler, NULL, &instance_got_ip));
     wifi_config_t wifi_config = {0};
     memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
     memcpy(wifi_config.sta.password, password, strlen(password));
@@ -81,8 +87,8 @@ bool WIFINETWORK::wifiInit(const char* ssid, const char* password) {
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or
     * connection failed for the maximum number of re-tries (WIFI_FAIL_BIT). The
-    * bits are set by event_handler() (see above) */
-    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
+    * bits are set by wifiEventHandler() (see above) */
+    EventBits_t bits = xEventGroupWaitBits(wifiEventGroup,WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
 
     /* xEventGroupWaitBits() returns the bits before the call returned, hence we
     * can test which event actually happened. */
@@ -92,7 +98,7 @@ bool WIFINETWORK::wifiInit(const char* ssid, const char* password) {
         /* The event will not be processed after unregister */
         ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
         ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
-        vEventGroupDelete(s_wifi_event_group);
+        vEventGroupDelete(wifiEventGroup);
         return true;
     } 
     else if (bits & WIFI_FAIL_BIT) 
@@ -101,7 +107,7 @@ bool WIFINETWORK::wifiInit(const char* ssid, const char* password) {
         /* The event will not be processed after unregister */
         ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
         ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
-        vEventGroupDelete(s_wifi_event_group);
+        vEventGroupDelete(wifiEventGroup);
         return false;
     } 
     else 
@@ -110,7 +116,7 @@ bool WIFINETWORK::wifiInit(const char* ssid, const char* password) {
         /* The event will not be processed after unregister */
         ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
         ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
-        vEventGroupDelete(s_wifi_event_group);
+        vEventGroupDelete(wifiEventGroup);
         return false;
     }
 

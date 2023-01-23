@@ -16,14 +16,11 @@ class SNTP
     char buffer[64];
 
     public:
+    void init(void);
+    bool setup(void); 
     char* getCurrentTime();
-    void setSystemTime();
+    static void timeSyncNotificationCallBack(struct timeval *tv);
 };
-
-
-static void initialize_sntp(void);
-static void obtain_time(void);
-void time_sync_notification_cb(struct timeval *tv);
 
 
 

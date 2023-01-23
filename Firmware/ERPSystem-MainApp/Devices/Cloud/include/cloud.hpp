@@ -8,6 +8,7 @@
 #include "esp_firebase/app.h"
 #include "esp_firebase/rtdb.h"
 #include "firebase_config.h"
+#include "WIFINETWORK.hpp"
 
 using namespace ESPFirebase;
 /*********************Firebase*******************/
@@ -16,7 +17,7 @@ class Cloud{
     protected:
     char* API;
     char* dbURL;
-    Json::Value new_data;
+    Json::Value newData;
 
     public:
     Cloud(char* API, char* dbURL)
@@ -35,8 +36,6 @@ class FIREBASE : public Cloud
     FIREBASE(char* API, char* dbURL) : Cloud(API, dbURL) {};
     void sendQRData(char* payload, char* timestamp = "xx:xx:xx");
     void startClient();
-    void stopClient();
-    bool getClientStatus();
 };
 
 #endif

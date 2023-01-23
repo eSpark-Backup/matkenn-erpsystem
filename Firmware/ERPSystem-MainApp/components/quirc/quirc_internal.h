@@ -76,7 +76,7 @@ struct quirc_grid {
 
 struct quirc {
 	uint8_t			*image;
-	quirc_pixel_t		*pixels;
+	quirc_pixel_t	*pixels;
 	int			*row_average; /* used by threshold() */
 	int			w;
 	int			h;
